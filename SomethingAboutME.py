@@ -4,7 +4,9 @@ import json
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
-TOKEN = "8946760848:AAHqTXREFbHV1IEwaNM3Ctb2YVi_U9O3qKI"
+TOKEN = os.environ["8946760848:AAHqTXREFbHV1IEwaNM3Ctb2YVi_U9O3qKI"]
+PORT = int(os.environ.get("PORT", 10000))
+RENDER_URL = os.environ["RENDER_EXTERNAL_URL"]
 
 MALUMOT_PAPKA = "malumotlar"
 os.makedirs(MALUMOT_PAPKA, exist_ok=True)
@@ -60,7 +62,6 @@ async def matn_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if mos_fayllar:
         fayl_nomi = mos_fayllar[0]
         kengaytma = fayl_nomi.split(".")[-1].lower()
-
         if kengaytma in ("jpg", "jpeg", "png"):
             await update.message.reply_photo(photo=open(fayl_nomi, "rb"))
         else:
@@ -72,7 +73,6 @@ async def matn_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def rasm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     holat = context.user_data.get("holat")
-
     if holat != "ochilgan":
         await update.message.reply_text("Avval /start👈 bosib, kodingizni kiriting🥱.")
         return
@@ -101,7 +101,6 @@ async def rasm_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def hujjat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     holat = context.user_data.get("holat")
-
     if holat != "ochilgan":
         await update.message.reply_text("Avval /start👈 bosib, kodingizni kiriting🥱.")
         return
@@ -116,7 +115,6 @@ async def hujjat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     document = update.message.document
     file = await context.bot.get_file(document.file_id)
-
     asl_kengaytma = os.path.splitext(document.file_name)[1] if document.file_name else ""
     fayl_nomi = f"{foydalanuvchi_papka}/{caption.strip()}{asl_kengaytma}"
     await file.download_to_drive(fayl_nomi)
@@ -132,11 +130,17 @@ async def hujjat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def yordam(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Bu bot sizga rasmlarni va boshqa muhim ma'lumotlarni saqlashga yordam beradi.🥱\n 1. Birinchi o'z kodingizni yarating.\n 2. Har safar ushbu yaratgan kodingiz bilan kirishingiz memkin bo'ladi.\n 3. Rasm yoki biror hujjat tashlashdan oldin izoh qoldiring\n 4. Izoh bu kalit so'zi bo`lib kerakli rasm yoki faylni topishga yordam beradi. \n/start bilan boshlang.")
 
+
 app = ApplicationBuilder().token(TOKEN).build()
 app.add_handler(CommandHandler("start", start))
 app.add_handler(MessageHandler(filters.PHOTO, rasm_handler))
 app.add_handler(MessageHandler(filters.Document.ALL, hujjat_handler))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, matn_handler))
+app.add_handler(CommandHandler("yordam", yordam))
 
-print("Running...")
-app.run_polling()
+app.run_webhook(
+    listen="0.0.0.0",
+    port=PORT,
+    url_path=TOKEN,
+    webhook_url=f"{RENDER_URL}/{TOKEN}",
+)
