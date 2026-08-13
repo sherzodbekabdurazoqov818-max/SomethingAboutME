@@ -4,7 +4,7 @@ import json
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
-TOKEN = os.environ["8946760848:AAHqTXREFbHV1IEwaNM3Ctb2YVi_U9O3qKI"]
+TOKEN = os.environ["TELEGRAM_TOKEN"]
 PORT = int(os.environ.get("PORT", 10000))
 RENDER_URL = os.environ["RENDER_EXTERNAL_URL"]
 
